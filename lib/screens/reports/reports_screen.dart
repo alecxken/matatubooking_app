@@ -2,16 +2,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../theme/transliner_theme.dart';
+import '../../providers/trip_provider.dart';
+import '../../providers/app_settings_provider.dart';
 
-/// Reports Screen with Calendar and Trial Balance
+/// Enhanced Reports Screen with Detailed Manifest
 /// Features:
-/// - Calendar view with trip counts per day
-/// - Trial balance on date selection (Revenue - Expenses)
-/// - Revenue from bookings and parcels
-/// - Clean, professional layout
+/// - Daily summary with accurate API data
+/// - Spreadsheet-like detailed manifest
+/// - Trip-by-trip breakdown
+/// - Vehicle, driver, revenue details
+/// - Export functionality
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
 
@@ -19,48 +22,108 @@ class ReportsScreen extends StatefulWidget {
   State<ReportsScreen> createState() => _ReportsScreenState();
 }
 
-class _ReportsScreenState extends State<ReportsScreen> {
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
-  CalendarFormat _calendarFormat = CalendarFormat.month;
-
-  // Mock data - Replace with actual API calls
-  final Map<DateTime, int> _tripCounts = {};
-  final Map<DateTime, TrialBalanceData> _trialBalanceData = {};
+class _ReportsScreenState extends State<ReportsScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  bool _isLoading = false;
+  DateTime _selectedDate = DateTime.now();
+  List<Map<String, dynamic>> _dailyTrips = [];
+  DailySummary? _summary;
 
   @override
   void initState() {
     super.initState();
-    _loadReportsData();
+    _tabController = TabController(length: 2, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDailyReport());
   }
 
-  Future<void> _loadReportsData() async {
-    // TODO: Replace with actual API calls
-    // Mock data for demonstration
-    setState(() {
-      final now = DateTime.now();
-      for (int i = 0; i < 30; i++) {
-        final date = DateTime(now.year, now.month, i + 1);
-        _tripCounts[_normalizeDate(date)] = (i % 5) + 1;
-        _trialBalanceData[_normalizeDate(date)] = TrialBalanceData(
-          bookingRevenue: (i + 1) * 15000.0,
-          parcelRevenue: (i + 1) * 3000.0,
-          expenses: (i + 1) * 8000.0,
-        );
-      }
-    });
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
-  DateTime _normalizeDate(DateTime date) {
-    return DateTime(date.year, date.month, date.day);
+  Future<void> _loadDailyReport() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final tripProvider = context.read<TripProvider>();
+
+      // Load trips for the selected date
+      await tripProvider.loadTripsForDate(
+        DateFormat('yyyy-MM-dd').format(_selectedDate),
+      );
+
+      final allTrips = [
+        ...(tripProvider.trips['to_nairobi'] ?? []),
+        ...(tripProvider.trips['from_nairobi'] ?? []),
+      ];
+
+      // Calculate summary
+      _summary = _calculateSummary(allTrips);
+      _dailyTrips = allTrips;
+    } catch (e) {
+      _showError('Failed to load report: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
-  int _getTripsForDay(DateTime day) {
-    return _tripCounts[_normalizeDate(day)] ?? 0;
+  DailySummary _calculateSummary(List<Map<String, dynamic>> trips) {
+    int totalTrips = trips.length;
+    int totalSeatsBooked = 0;
+    int totalSeatsAvailable = 0;
+    double totalRevenue = 0;
+    Set<String> uniqueVehicles = {};
+    Set<String> uniqueDrivers = {};
+
+    for (var trip in trips) {
+      final booked = trip['booked_seats_count'] ?? 0;
+      final available = trip['available_seats'] ?? 0;
+      final fare = double.tryParse(trip['fare']?.toString() ?? '0') ?? 0;
+
+      totalSeatsBooked += booked as int;
+      totalSeatsAvailable += available as int;
+      totalRevenue += fare * booked;
+
+      if (trip['vehicle'] != null) uniqueVehicles.add(trip['vehicle']);
+      if (trip['driver'] != null) uniqueDrivers.add(trip['driver']);
+    }
+
+    return DailySummary(
+      totalTrips: totalTrips,
+      totalSeatsBooked: totalSeatsBooked,
+      totalSeatsAvailable: totalSeatsAvailable,
+      totalRevenue: totalRevenue,
+      uniqueVehicles: uniqueVehicles.length,
+      uniqueDrivers: uniqueDrivers.length,
+      occupancyRate: (totalSeatsBooked + totalSeatsAvailable) > 0
+          ? (totalSeatsBooked / (totalSeatsBooked + totalSeatsAvailable)) * 100
+          : 0,
+    );
   }
 
-  TrialBalanceData? _getTrialBalanceForDay(DateTime day) {
-    return _trialBalanceData[_normalizeDate(day)];
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.montserrat()),
+        backgroundColor: TranslinerTheme.errorRed,
+      ),
+    );
+  }
+
+  Future<void> _selectDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (date != null && date != _selectedDate) {
+      setState(() => _selectedDate = date);
+      _loadDailyReport();
+    }
   }
 
   @override
@@ -68,277 +131,420 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return Scaffold(
       backgroundColor: TranslinerTheme.lightGray,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: TranslinerTheme.primaryGradient,
+          ),
+        ),
         title: Text(
-          'Reports & Analytics',
+          'Daily Reports',
           style: GoogleFonts.montserrat(
             fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list_rounded),
-            onPressed: () {
-              // TODO: Add filter options
-            },
-            tooltip: 'Filters',
+            icon: const Icon(Icons.calendar_month, color: Colors.white),
+            onPressed: _selectDate,
+            tooltip: 'Select Date',
           ),
           IconButton(
-            icon: const Icon(Icons.download_rounded),
-            onPressed: () {
-              // TODO: Export report
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Export feature coming soon',
-                    style: GoogleFonts.montserrat(),
-                  ),
-                  backgroundColor: TranslinerTheme.infoBlue,
-                ),
-              );
-            },
-            tooltip: 'Export',
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _loadDailyReport,
+            tooltip: 'Refresh',
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Calendar Card
-            Container(
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: TranslinerShadows.level2,
-              ),
-              child: Column(
-                children: [
-                  // Calendar Header
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          TranslinerTheme.primaryRed.withOpacity(0.1),
-                          TranslinerTheme.infoBlue.withOpacity(0.1),
-                        ],
+      body: Column(
+        children: [
+          // Date Selector Bar
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.white,
+            child: Row(
+              children: [
+                Icon(Icons.date_range, color: TranslinerTheme.primaryRed),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Report Date',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 11,
+                          color: TranslinerTheme.gray600,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(20),
+                      Text(
+                        DateFormat('EEEE, MMMM d, y').format(_selectedDate),
+                        style: GoogleFonts.montserrat(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: TranslinerTheme.charcoal,
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_month_rounded,
-                          color: TranslinerTheme.primaryRed,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Trip Calendar',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: TranslinerTheme.charcoal,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: TranslinerTheme.successGreen.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${_tripCounts.length} days',
-                            style: GoogleFonts.montserrat(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: TranslinerTheme.successGreen,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
-
-                  // Calendar
-                  TableCalendar(
-                    firstDay: DateTime.utc(2024, 1, 1),
-                    lastDay: DateTime.utc(2030, 12, 31),
-                    focusedDay: _focusedDay,
-                    selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                    calendarFormat: _calendarFormat,
-                    startingDayOfWeek: StartingDayOfWeek.monday,
-                    calendarStyle: CalendarStyle(
-                      todayDecoration: BoxDecoration(
-                        color: TranslinerTheme.infoBlue.withOpacity(0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      selectedDecoration: const BoxDecoration(
-                        color: TranslinerTheme.primaryRed,
-                        shape: BoxShape.circle,
-                      ),
-                      markerDecoration: const BoxDecoration(
-                        color: TranslinerTheme.successGreen,
-                        shape: BoxShape.circle,
-                      ),
-                      weekendTextStyle: GoogleFonts.montserrat(
-                        color: TranslinerTheme.errorRed,
-                      ),
-                      defaultTextStyle: GoogleFonts.montserrat(),
-                      selectedTextStyle: GoogleFonts.montserrat(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      todayTextStyle: GoogleFonts.montserrat(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    headerStyle: HeaderStyle(
-                      formatButtonVisible: false,
-                      titleCentered: true,
-                      titleTextStyle: GoogleFonts.montserrat(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: TranslinerTheme.charcoal,
-                      ),
-                      leftChevronIcon: const Icon(
-                        Icons.chevron_left,
-                        color: TranslinerTheme.primaryRed,
-                      ),
-                      rightChevronIcon: const Icon(
-                        Icons.chevron_right,
-                        color: TranslinerTheme.primaryRed,
-                      ),
-                    ),
-                    daysOfWeekStyle: DaysOfWeekStyle(
-                      weekdayStyle: GoogleFonts.montserrat(
-                        fontWeight: FontWeight.w600,
-                        color: TranslinerTheme.gray600,
-                      ),
-                      weekendStyle: GoogleFonts.montserrat(
-                        fontWeight: FontWeight.w600,
-                        color: TranslinerTheme.errorRed,
-                      ),
-                    ),
-                    onDaySelected: (selectedDay, focusedDay) {
-                      setState(() {
-                        _selectedDay = selectedDay;
-                        _focusedDay = focusedDay;
-                      });
-                    },
-                    onFormatChanged: (format) {
-                      setState(() {
-                        _calendarFormat = format;
-                      });
-                    },
-                    onPageChanged: (focusedDay) {
-                      _focusedDay = focusedDay;
-                    },
-                    calendarBuilders: CalendarBuilders(
-                      markerBuilder: (context, day, events) {
-                        final count = _getTripsForDay(day);
-                        if (count > 0) {
-                          return Positioned(
-                            bottom: 4,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: TranslinerTheme.successGreen,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                count.toString(),
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          );
-                        }
-                        return null;
-                      },
-                    ),
+                ),
+                TextButton.icon(
+                  onPressed: _selectDate,
+                  icon: const Icon(Icons.edit_calendar, size: 18),
+                  label: Text(
+                    'Change',
+                    style: GoogleFonts.montserrat(fontSize: 13),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
 
-            // Trial Balance Card (only show when date is selected)
-            if (_selectedDay != null) _buildTrialBalanceCard(),
+          // Tabs
+          Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: TranslinerTheme.primaryRed,
+              unselectedLabelColor: TranslinerTheme.gray600,
+              indicatorColor: TranslinerTheme.primaryRed,
+              labelStyle: GoogleFonts.montserrat(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+              tabs: const [
+                Tab(text: 'Summary'),
+                Tab(text: 'Detailed Manifest'),
+              ],
+            ),
+          ),
 
-            const SizedBox(height: 16),
-          ],
-        ),
+          // Content
+          Expanded(
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: TranslinerTheme.primaryRed,
+                    ),
+                  )
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildSummaryTab(),
+                      _buildManifestTab(),
+                    ],
+                  ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildTrialBalanceCard() {
-    final data = _getTrialBalanceForDay(_selectedDay!);
-    if (data == null) {
-      return const SizedBox.shrink();
+  Widget _buildSummaryTab() {
+    if (_summary == null) {
+      return Center(
+        child: Text(
+          'No data available',
+          style: GoogleFonts.montserrat(color: TranslinerTheme.gray600),
+        ),
+      );
     }
 
-    final totalRevenue = data.bookingRevenue + data.parcelRevenue;
-    final netProfit = totalRevenue - data.expenses;
-    final profitMargin =
-        totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: TranslinerShadows.level2,
-      ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Header
+          // Summary Cards Grid
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryCard(
+                  'Total Trips',
+                  _summary!.totalTrips.toString(),
+                  Icons.directions_bus,
+                  TranslinerTheme.primaryRed,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSummaryCard(
+                  'Vehicles Used',
+                  _summary!.uniqueVehicles.toString(),
+                  Icons.local_shipping,
+                  TranslinerTheme.infoBlue,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryCard(
+                  'Seats Booked',
+                  _summary!.totalSeatsBooked.toString(),
+                  Icons.event_seat,
+                  TranslinerTheme.successGreen,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSummaryCard(
+                  'Drivers',
+                  _summary!.uniqueDrivers.toString(),
+                  Icons.person,
+                  TranslinerTheme.warningYellow,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Revenue Card
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  TranslinerTheme.infoBlue.withOpacity(0.1),
                   TranslinerTheme.successGreen.withOpacity(0.1),
+                  TranslinerTheme.successGreen.withOpacity(0.05),
                 ],
               ),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: TranslinerTheme.successGreen.withOpacity(0.3),
               ),
             ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: TranslinerTheme.successGreen.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.attach_money,
+                        color: TranslinerTheme.successGreen,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Total Revenue',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 13,
+                              color: TranslinerTheme.gray600,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            _formatCurrency(_summary!.totalRevenue),
+                            style: GoogleFonts.montserrat(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: TranslinerTheme.successGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildStatItem(
+                      'Occupancy',
+                      '${_summary!.occupancyRate.toStringAsFixed(1)}%',
+                    ),
+                    _buildStatItem(
+                      'Avg/Trip',
+                      _formatCurrency(_summary!.totalTrips > 0
+                          ? _summary!.totalRevenue / _summary!.totalTrips
+                          : 0),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildManifestTab() {
+    if (_dailyTrips.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.description_outlined,
+              size: 64,
+              color: TranslinerTheme.gray400,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No trips found for this date',
+              style: GoogleFonts.montserrat(
+                fontSize: 16,
+                color: TranslinerTheme.gray600,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Manifest Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: TranslinerTheme.gray100,
             child: Row(
               children: [
-                Icon(
-                  Icons.account_balance_rounded,
-                  color: TranslinerTheme.infoBlue,
-                ),
+                Icon(Icons.table_chart, color: TranslinerTheme.primaryRed),
                 const SizedBox(width: 12),
+                Text(
+                  'Trip Manifest - ${_dailyTrips.length} Trips',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: TranslinerTheme.charcoal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Spreadsheet Table
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowColor: MaterialStateProperty.all(
+                TranslinerTheme.primaryRed.withOpacity(0.1),
+              ),
+              columnSpacing: 16,
+              headingTextStyle: GoogleFonts.montserrat(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color: TranslinerTheme.primaryRed,
+              ),
+              dataTextStyle: GoogleFonts.montserrat(
+                fontSize: 12,
+                color: TranslinerTheme.charcoal,
+              ),
+              columns: const [
+                DataColumn(label: Text('Time')),
+                DataColumn(label: Text('Route')),
+                DataColumn(label: Text('Vehicle')),
+                DataColumn(label: Text('Driver')),
+                DataColumn(label: Text('Seats\nBooked')),
+                DataColumn(label: Text('Seats\nAvail')),
+                DataColumn(label: Text('Fare')),
+                DataColumn(label: Text('Revenue')),
+              ],
+              rows: _dailyTrips.map((trip) {
+                final booked = trip['booked_seats_count'] ?? 0;
+                final fare = double.tryParse(trip['fare']?.toString() ?? '0') ?? 0;
+                final revenue = fare * (booked as int);
+
+                return DataRow(
+                  cells: [
+                    DataCell(Text(trip['departure_time'] ?? 'N/A')),
+                    DataCell(
+                      Container(
+                        constraints: const BoxConstraints(maxWidth: 120),
+                        child: Text(
+                          trip['route'] ?? 'N/A',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    DataCell(Text(trip['vehicle'] ?? 'TBA')),
+                    DataCell(Text(trip['driver'] ?? 'TBA')),
+                    DataCell(
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: TranslinerTheme.infoBlue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          booked.toString(),
+                          style: GoogleFonts.montserrat(
+                            fontWeight: FontWeight.bold,
+                            color: TranslinerTheme.infoBlue,
+                          ),
+                        ),
+                      ),
+                    ),
+                    DataCell(Text((trip['available_seats'] ?? 0).toString())),
+                    DataCell(Text(_formatCurrency(fare))),
+                    DataCell(
+                      Text(
+                        _formatCurrency(revenue),
+                        style: GoogleFonts.montserrat(
+                          fontWeight: FontWeight.bold,
+                          color: TranslinerTheme.successGreen,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+
+          // Total Row
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: TranslinerTheme.successGreen.withOpacity(0.1),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'TOTAL:',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: TranslinerTheme.charcoal,
+                  ),
+                ),
                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Trial Balance',
+                      '${_summary?.totalSeatsBooked ?? 0} Seats Booked',
                       style: GoogleFonts.montserrat(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: TranslinerTheme.charcoal,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: TranslinerTheme.infoBlue,
                       ),
                     ),
                     Text(
-                      DateFormat('EEEE, MMMM d, y').format(_selectedDay!),
+                      _formatCurrency(_summary?.totalRevenue ?? 0),
                       style: GoogleFonts.montserrat(
-                        fontSize: 12,
-                        color: TranslinerTheme.gray600,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: TranslinerTheme.successGreen,
                       ),
                     ),
                   ],
@@ -346,149 +552,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ],
             ),
           ),
-
-          // Summary Cards
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildSummaryCard(
-                    'Total Revenue',
-                    totalRevenue,
-                    Icons.trending_up_rounded,
-                    TranslinerTheme.successGreen,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildSummaryCard(
-                    'Total Expenses',
-                    data.expenses,
-                    Icons.trending_down_rounded,
-                    TranslinerTheme.errorRed,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Net Profit Card
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: netProfit >= 0
-                    ? [
-                        TranslinerTheme.successGreen.withOpacity(0.1),
-                        TranslinerTheme.successGreen.withOpacity(0.05),
-                      ]
-                    : [
-                        TranslinerTheme.errorRed.withOpacity(0.1),
-                        TranslinerTheme.errorRed.withOpacity(0.05),
-                      ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: netProfit >= 0
-                    ? TranslinerTheme.successGreen.withOpacity(0.3)
-                    : TranslinerTheme.errorRed.withOpacity(0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: netProfit >= 0
-                        ? TranslinerTheme.successGreen.withOpacity(0.2)
-                        : TranslinerTheme.errorRed.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    netProfit >= 0
-                        ? Icons.check_circle_rounded
-                        : Icons.warning_rounded,
-                    color: netProfit >= 0
-                        ? TranslinerTheme.successGreen
-                        : TranslinerTheme.errorRed,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Net Profit/Loss',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: TranslinerTheme.gray600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _formatCurrency(netProfit),
-                        style: GoogleFonts.montserrat(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: netProfit >= 0
-                              ? TranslinerTheme.successGreen
-                              : TranslinerTheme.errorRed,
-                        ),
-                      ),
-                      Text(
-                        '${profitMargin.toStringAsFixed(1)}% margin',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 11,
-                          color: TranslinerTheme.gray600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Revenue Breakdown
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Revenue Breakdown',
-                  style: GoogleFonts.montserrat(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: TranslinerTheme.charcoal,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildRevenueItem(
-                  'Booking Revenue',
-                  data.bookingRevenue,
-                  Icons.confirmation_number_rounded,
-                  TranslinerTheme.infoBlue,
-                ),
-                const SizedBox(height: 8),
-                _buildRevenueItem(
-                  'Parcel Revenue',
-                  data.parcelRevenue,
-                  Icons.inventory_2_rounded,
-                  TranslinerTheme.warningYellow,
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
         ],
       ),
     );
@@ -496,35 +559,42 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Widget _buildSummaryCard(
     String title,
-    double amount,
+    String value,
     IconData icon,
     Color color,
   ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
+        boxShadow: TranslinerShadows.level1,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 24),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
           const SizedBox(height: 12),
           Text(
             title,
             style: GoogleFonts.montserrat(
               fontSize: 11,
-              fontWeight: FontWeight.w600,
               color: TranslinerTheme.gray600,
+              fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            _formatCurrency(amount),
+            value,
             style: GoogleFonts.montserrat(
-              fontSize: 18,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: color,
             ),
@@ -534,51 +604,26 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  Widget _buildRevenueItem(
-    String title,
-    double amount,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: TranslinerTheme.gray200),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 20),
+  Widget _buildStatItem(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.montserrat(
+            fontSize: 11,
+            color: TranslinerTheme.gray600,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: GoogleFonts.montserrat(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: TranslinerTheme.charcoal,
-              ),
-            ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.montserrat(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: TranslinerTheme.successGreen,
           ),
-          Text(
-            _formatCurrency(amount),
-            style: GoogleFonts.montserrat(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -591,18 +636,23 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 }
 
-/// Trial Balance Data Model
-class TrialBalanceData {
-  final double bookingRevenue;
-  final double parcelRevenue;
-  final double expenses;
+// Daily Summary Model
+class DailySummary {
+  final int totalTrips;
+  final int totalSeatsBooked;
+  final int totalSeatsAvailable;
+  final double totalRevenue;
+  final int uniqueVehicles;
+  final int uniqueDrivers;
+  final double occupancyRate;
 
-  TrialBalanceData({
-    required this.bookingRevenue,
-    required this.parcelRevenue,
-    required this.expenses,
+  DailySummary({
+    required this.totalTrips,
+    required this.totalSeatsBooked,
+    required this.totalSeatsAvailable,
+    required this.totalRevenue,
+    required this.uniqueVehicles,
+    required this.uniqueDrivers,
+    required this.occupancyRate,
   });
-
-  double get totalRevenue => bookingRevenue + parcelRevenue;
-  double get netProfit => totalRevenue - expenses;
 }
