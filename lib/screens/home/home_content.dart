@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../providers/trip_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -60,12 +62,64 @@ class _HomeContentState extends State<HomeContent>
 
   Widget _buildPremiumHeader() {
     return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: const BoxDecoration(
         gradient: TranslinerTheme.primaryGradient,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(32),
           bottomRight: Radius.circular(32),
         ),
+      ),
+      child: Row(
+        children: [
+          // Logo
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            padding: const EdgeInsets.all(10),
+            child: SvgPicture.asset(
+              'assets/images/logo.svg',
+              colorFilter: const ColorFilter.mode(
+                Colors.white,
+                BlendMode.srcIn,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // App Name
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'TransLine Cruiser',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Text(
+                  'Your Journey, Our Priority',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.8),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
