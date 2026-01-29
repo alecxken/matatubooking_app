@@ -54,9 +54,9 @@ class _ReportsScreenState extends State<ReportsScreen>
         DateFormat('yyyy-MM-dd').format(_selectedDate),
       );
 
-      final allTrips = [
-        ...(tripProvider.trips['to_nairobi'] ?? []),
-        ...(tripProvider.trips['from_nairobi'] ?? []),
+      final allTrips = <Map<String, dynamic>>[
+        ...(tripProvider.trips['to_nairobi'] ?? []).cast<Map<String, dynamic>>(),
+        ...(tripProvider.trips['from_nairobi'] ?? []).cast<Map<String, dynamic>>(),
       ];
 
       // Calculate summary
@@ -137,6 +137,11 @@ class _ReportsScreenState extends State<ReportsScreen>
           decoration: const BoxDecoration(
             gradient: TranslinerTheme.primaryGradient,
           ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+          tooltip: 'Back',
         ),
         title: Text(
           'Daily Reports',
