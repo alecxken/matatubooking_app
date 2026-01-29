@@ -54,9 +54,9 @@ class _ReportsScreenState extends State<ReportsScreen>
         DateFormat('yyyy-MM-dd').format(_selectedDate),
       );
 
-      final allTrips = [
-        ...(tripProvider.trips['to_nairobi'] ?? []),
-        ...(tripProvider.trips['from_nairobi'] ?? []),
+      final allTrips = <Map<String, dynamic>>[
+        ...(tripProvider.trips['to_nairobi'] ?? []).cast<Map<String, dynamic>>(),
+        ...(tripProvider.trips['from_nairobi'] ?? []).cast<Map<String, dynamic>>(),
       ];
 
       // Calculate summary
