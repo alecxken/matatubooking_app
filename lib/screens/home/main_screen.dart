@@ -366,9 +366,14 @@ class _MainScreenState extends State<MainScreen> {
               ),
               const SizedBox(height: 16),
               CalendarDatePicker(
-                initialDate: settingsProvider.appDate,
+                initialDate: settingsProvider.appDate.isBefore(DateTime(2020))
+                    ? DateTime(2020)
+                    : (settingsProvider.appDate.isAfter(DateTime.now().add(const Duration(days: 365)))
+                        ? DateTime.now()
+                        : settingsProvider.appDate),
                 firstDate: DateTime(2020), // Can go back to 2020
                 lastDate: DateTime.now().add(const Duration(days: 365)),
+                currentDate: DateTime.now().add(const Duration(days: 365)), // Allow all past dates to be selectable
                 onDateChanged: (date) {
                   settingsProvider.setAppDate(date);
                   Navigator.of(context).pop();
