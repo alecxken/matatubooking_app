@@ -510,8 +510,15 @@ class _ModernDrawerState extends State<ModernDrawer>
     final isOwner = user.hasRole('owner');
 
     // Debug print to check roles
+    debugPrint('═══════════════════════════════════════════════');
+    debugPrint('ModernDrawer - User: ${user.fullName}');
     debugPrint('ModernDrawer - User roles: ${user.roles}');
-    debugPrint('ModernDrawer - isAdmin: $isAdmin, isManager: $isManager');
+    debugPrint('ModernDrawer - isAdmin: $isAdmin');
+    debugPrint('ModernDrawer - isManager: $isManager');
+    debugPrint('ModernDrawer - isSupervisor: $isSupervisor');
+    debugPrint('ModernDrawer - isOwner: $isOwner');
+    debugPrint('ModernDrawer - canViewReports: ${user.canViewReports}');
+    debugPrint('═══════════════════════════════════════════════');
 
     List<DrawerMenuItem> items = [];
 
@@ -535,7 +542,9 @@ class _ModernDrawerState extends State<ModernDrawer>
     ));
 
     // Reports (Admin, Manager, Supervisor, Owner)
+    debugPrint('🔍 Checking Reports: isAdmin=$isAdmin || isManager=$isManager || isSupervisor=$isSupervisor || isOwner=$isOwner');
     if (isAdmin || isManager || isSupervisor || isOwner) {
+      debugPrint('✅ Adding Reports menu');
       items.add(DrawerMenuItem(
         icon: Icons.analytics_rounded,
         title: 'Reports',
@@ -545,6 +554,8 @@ class _ModernDrawerState extends State<ModernDrawer>
           context.go('/reports');
         },
       ));
+    } else {
+      debugPrint('❌ NOT adding Reports menu');
     }
 
     // Parcels (Everyone can view, Clerk/Manager can manage)
@@ -559,7 +570,9 @@ class _ModernDrawerState extends State<ModernDrawer>
     ));
 
     // Trip Management (Admin, Manager, Supervisor)
+    debugPrint('🔍 Checking Trip Management: isAdmin=$isAdmin || isManager=$isManager || isSupervisor=$isSupervisor');
     if (isAdmin || isManager || isSupervisor) {
+      debugPrint('✅ Adding Trip Management menu');
       items.add(DrawerMenuItem(
         icon: Icons.settings_applications_rounded,
         title: 'Trip Management',
@@ -609,6 +622,8 @@ class _ModernDrawerState extends State<ModernDrawer>
           ],
         ],
       ));
+    } else {
+      debugPrint('❌ NOT adding Trip Management menu');
     }
 
     // Administration (Admin only)
@@ -664,6 +679,10 @@ class _ModernDrawerState extends State<ModernDrawer>
       iconColor: TranslinerTheme.errorRed,
       onTap: () => _handleLogout(),
     ));
+
+    debugPrint('📋 Total menu items: ${items.length}');
+    debugPrint('📋 Menu titles: ${items.map((e) => e.title).join(", ")}');
+    debugPrint('═══════════════════════════════════════════════');
 
     return items;
   }
