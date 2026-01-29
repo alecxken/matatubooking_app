@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../utils/constants.dart';
@@ -251,7 +252,7 @@ class _OperationsScreenState extends State<OperationsScreen> {
                   subtitle: 'Vehicle owners',
                   icon: Icons.business,
                   color: Colors.purple,
-                  onTap: () => _showComingSoon('Owner Management'),
+                  onTap: () => context.go('/operations/owners'),
                 ),
                 _buildOperationCard(
                   title: 'Expenses',
