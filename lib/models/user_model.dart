@@ -115,19 +115,27 @@ class UserModel {
   }
 
   bool hasRole(String role) {
-    return roles.contains(role);
+    // Case-insensitive role checking
+    final roleLower = role.toLowerCase();
+    return roles.any((userRole) => userRole.toLowerCase() == roleLower);
   }
 
   bool hasAnyRole(List<String> roleList) {
-    return roles.any((userRole) => roleList.contains(userRole));
+    // Case-insensitive role checking
+    final roleListLower = roleList.map((r) => r.toLowerCase()).toList();
+    return roles.any((userRole) => roleListLower.contains(userRole.toLowerCase()));
   }
 
   bool hasPermission(String permission) {
-    return permissions.contains(permission);
+    // Case-insensitive permission checking
+    final permissionLower = permission.toLowerCase();
+    return permissions.any((userPerm) => userPerm.toLowerCase() == permissionLower);
   }
 
   bool hasAnyPermission(List<String> permissionList) {
-    return permissions.any((userPerm) => permissionList.contains(userPerm));
+    // Case-insensitive permission checking
+    final permissionListLower = permissionList.map((p) => p.toLowerCase()).toList();
+    return permissions.any((userPerm) => permissionListLower.contains(userPerm.toLowerCase()));
   }
 
   bool get isAdmin {
@@ -160,8 +168,10 @@ class UserModel {
       'user',
     ];
 
+    // Case-insensitive role priority checking
+    final rolesLower = roles.map((r) => r.toLowerCase()).toList();
     for (String role in rolePriority) {
-      if (roles.contains(role)) {
+      if (rolesLower.contains(role)) {
         return role.replaceAll('-', ' ').toUpperCase();
       }
     }
