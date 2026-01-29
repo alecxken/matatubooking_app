@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'providers/auth_provider.dart';
 import 'providers/trip_provider.dart';
 import 'providers/app_settings_provider.dart';
+import 'providers/trip_management_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/main_screen.dart';
 import 'screens/trip/trip_detail_screen.dart';
@@ -12,6 +13,7 @@ import 'screens/trip/seat_selection_screen.dart';
 import 'screens/trip/payment_screen.dart';
 import 'screens/settings/app_settings_screen.dart';
 import 'screens/operations/operations_screen.dart';
+import 'screens/trip_management/owner_management_screen.dart';
 import 'theme/transliner_theme.dart';
 
 void main() {
@@ -28,6 +30,7 @@ class TranslinerCruiserApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => TripProvider()),
         ChangeNotifierProvider(create: (_) => AppSettingsProvider()),
+        ChangeNotifierProvider(create: (_) => TripManagementProvider()),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
@@ -43,216 +46,9 @@ class TranslinerCruiserApp extends StatelessWidget {
   }
 
   ThemeData _buildTheme() {
-    return ThemeData(
-      useMaterial3: true,
-      primaryColor: TranslinerTheme.primaryRed,
+    // Use the comprehensive Material 3 theme with San Francisco-like typography
+    return TranslinerTheme.lightTheme.copyWith(
       scaffoldBackgroundColor: TranslinerTheme.lightGray,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: TranslinerTheme.primaryRed,
-        primary: TranslinerTheme.primaryRed,
-        secondary: TranslinerTheme.accentRed,
-        tertiary: TranslinerTheme.infoBlue,
-        error: TranslinerTheme.errorRed,
-        surface: TranslinerTheme.white,
-        brightness: Brightness.light,
-      ),
-
-      // AppBar Theme
-      appBarTheme: AppBarTheme(
-        backgroundColor: TranslinerTheme.primaryRed,
-        foregroundColor: TranslinerTheme.white,
-        elevation: 0,
-        shadowColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        titleTextStyle: const TextStyle(
-          color: TranslinerTheme.white,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-
-      // Button Themes
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style:
-            ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: TranslinerTheme.white,
-              shadowColor: Colors.transparent,
-              padding: TranslinerSpacing.buttonPadding,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              textStyle: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
-            ).copyWith(
-              backgroundColor: MaterialStateProperty.all(Colors.transparent),
-            ),
-      ),
-
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: TranslinerTheme.primaryRed,
-          foregroundColor: TranslinerTheme.white,
-          padding: TranslinerSpacing.buttonPadding,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-        ),
-      ),
-
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: TranslinerTheme.primaryRed,
-          side: const BorderSide(color: TranslinerTheme.primaryRed, width: 2),
-          padding: TranslinerSpacing.buttonPadding,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-        ),
-      ),
-
-      // Card Theme
-      cardTheme: CardThemeData(
-        color: TranslinerTheme.white,
-        elevation: 0,
-        shadowColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: TranslinerTheme.gray100),
-        ),
-        margin: const EdgeInsets.all(8),
-      ),
-
-      // Input Decoration Theme
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: TranslinerTheme.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: TranslinerTheme.gray400),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: TranslinerTheme.gray400),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: TranslinerTheme.primaryRed,
-            width: 2,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: TranslinerTheme.errorRed),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: TranslinerTheme.errorRed,
-            width: 2,
-          ),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-      ),
-
-      // Text Themes
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
-          color: TranslinerTheme.charcoal,
-          fontWeight: FontWeight.bold,
-        ),
-        displayMedium: TextStyle(
-          color: TranslinerTheme.charcoal,
-          fontWeight: FontWeight.bold,
-        ),
-        displaySmall: TextStyle(
-          color: TranslinerTheme.charcoal,
-          fontWeight: FontWeight.bold,
-        ),
-        headlineLarge: TextStyle(
-          color: TranslinerTheme.charcoal,
-          fontWeight: FontWeight.w600,
-        ),
-        headlineMedium: TextStyle(
-          color: TranslinerTheme.charcoal,
-          fontWeight: FontWeight.w600,
-        ),
-        headlineSmall: TextStyle(
-          color: TranslinerTheme.charcoal,
-          fontWeight: FontWeight.w600,
-        ),
-        titleLarge: TextStyle(
-          color: TranslinerTheme.charcoal,
-          fontWeight: FontWeight.w600,
-        ),
-        titleMedium: TextStyle(
-          color: TranslinerTheme.charcoal,
-          fontWeight: FontWeight.w500,
-        ),
-        titleSmall: TextStyle(
-          color: TranslinerTheme.charcoal,
-          fontWeight: FontWeight.w500,
-        ),
-        bodyLarge: TextStyle(color: TranslinerTheme.charcoal),
-        bodyMedium: TextStyle(color: TranslinerTheme.charcoal),
-        bodySmall: TextStyle(color: TranslinerTheme.gray600),
-        labelLarge: TextStyle(
-          color: TranslinerTheme.charcoal,
-          fontWeight: FontWeight.w500,
-        ),
-        labelMedium: TextStyle(
-          color: TranslinerTheme.gray600,
-          fontWeight: FontWeight.w500,
-        ),
-        labelSmall: TextStyle(
-          color: TranslinerTheme.gray600,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-
-      // Bottom Navigation Theme
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: TranslinerTheme.white,
-        selectedItemColor: TranslinerTheme.primaryRed,
-        unselectedItemColor: TranslinerTheme.gray600,
-        type: BottomNavigationBarType.fixed,
-        elevation: 8,
-      ),
-
-      // Dialog Theme
-      dialogTheme: DialogThemeData(
-        backgroundColor: TranslinerTheme.white,
-        elevation: 8,
-        shadowColor: Colors.black26,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-
-      // Floating Action Button Theme
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: TranslinerTheme.primaryRed,
-        foregroundColor: TranslinerTheme.white,
-        elevation: 6,
-      ),
-
-      // Progress Indicator Theme
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: TranslinerTheme.primaryRed,
-      ),
-
-      // Divider Theme
-      dividerTheme: const DividerThemeData(
-        color: TranslinerTheme.gray100,
-        thickness: 1,
-        space: 1,
-      ),
     );
   }
 
@@ -315,6 +111,10 @@ class TranslinerCruiserApp extends StatelessWidget {
         GoRoute(
           path: '/operations',
           builder: (context, state) => const OperationsScreen(),
+        ),
+        GoRoute(
+          path: '/operations/owners',
+          builder: (context, state) => const OwnerManagementScreen(),
         ),
       ],
     );
