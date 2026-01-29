@@ -1,5 +1,11 @@
 // lib/models/trip_template_model.dart
 
+import 'owner_model.dart';
+import 'vehicle_model.dart';
+import 'driver_model.dart';
+import 'route_model.dart';
+import 'destination_model.dart';
+
 /// Model class for a Trip within a Template
 /// Represents a trip configuration that's part of a template
 class TemplateTripsModel {
@@ -325,10 +331,3 @@ class DropdownOptionsModel {
     return 'DropdownOptionsModel(owners: ${owners.length}, vehicles: ${vehicles.length}, drivers: ${drivers.length}, routes: ${routes.length})';
   }
 }
-
-// Import required models
-import 'owner_model.dart';
-import 'vehicle_model.dart';
-import 'driver_model.dart';
-import 'route_model.dart';
-import 'destination_model.dart';
