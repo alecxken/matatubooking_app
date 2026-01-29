@@ -273,7 +273,7 @@ class _ModernDrawerState extends State<ModernDrawer>
                   child: Text(
                     item.title,
                     style: GoogleFonts.montserrat(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: item.isSelected
                           ? FontWeight.w600
                           : FontWeight.w500,
@@ -366,7 +366,7 @@ class _ModernDrawerState extends State<ModernDrawer>
                       child: Text(
                         item.title,
                         style: GoogleFonts.montserrat(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: isExpanded
                               ? FontWeight.w600
                               : FontWeight.w500,
@@ -435,7 +435,7 @@ class _ModernDrawerState extends State<ModernDrawer>
                               child: Text(
                                 child.title,
                                 style: GoogleFonts.montserrat(
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   fontWeight: child.isSelected
                                       ? FontWeight.w600
                                       : FontWeight.w500,
@@ -583,6 +583,22 @@ class _ModernDrawerState extends State<ModernDrawer>
           ),
           if (isAdmin || isManager) ...[
             DrawerMenuItem(
+              icon: Icons.directions_bus_filled_rounded,
+              title: 'Vehicles',
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/operations/vehicles');
+              },
+            ),
+            DrawerMenuItem(
+              icon: Icons.person_rounded,
+              title: 'Drivers',
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/operations/drivers');
+              },
+            ),
+            DrawerMenuItem(
               icon: Icons.account_balance_wallet_rounded,
               title: 'Expense Types',
               onTap: () {
@@ -591,32 +607,6 @@ class _ModernDrawerState extends State<ModernDrawer>
               },
             ),
           ],
-        ],
-      ));
-    }
-
-    // Fleet Management (Admin, Manager)
-    if (isAdmin || isManager) {
-      items.add(DrawerMenuItem(
-        icon: Icons.local_shipping_rounded,
-        title: 'Fleet',
-        children: [
-          DrawerMenuItem(
-            icon: Icons.directions_bus_filled_rounded,
-            title: 'Vehicles',
-            onTap: () {
-              Navigator.pop(context);
-              context.go('/operations/vehicles');
-            },
-          ),
-          DrawerMenuItem(
-            icon: Icons.person_rounded,
-            title: 'Drivers',
-            onTap: () {
-              Navigator.pop(context);
-              context.go('/operations/drivers');
-            },
-          ),
         ],
       ));
     }
