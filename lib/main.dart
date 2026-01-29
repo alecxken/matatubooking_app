@@ -14,6 +14,8 @@ import 'screens/trip/payment_screen.dart';
 import 'screens/settings/app_settings_screen.dart';
 import 'screens/operations/operations_screen.dart';
 import 'screens/trip_management/owner_management_screen.dart';
+import 'screens/reports/reports_screen.dart';
+import 'screens/trip/parcels_management_screen.dart';
 import 'theme/transliner_theme.dart';
 
 void main() {
@@ -115,6 +117,14 @@ class TranslinerCruiserApp extends StatelessWidget {
         GoRoute(
           path: '/operations/owners',
           builder: (context, state) => const OwnerManagementScreen(),
+        ),
+        GoRoute(
+          path: '/reports',
+          builder: (context, state) => const ReportsScreen(),
+        ),
+        GoRoute(
+          path: '/parcels',
+          builder: (context, state) => ParcelsManagementScreen(),
         ),
       ],
     );

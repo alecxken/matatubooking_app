@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/app_settings_provider.dart';
 import '../../theme/transliner_theme.dart';
+import '../../widgets/modern_drawer.dart';
 import '../trip/parcels_management_screen.dart';
 import 'home_content.dart';
 import 'trip_management_modal.dart';
@@ -27,7 +28,7 @@ class _MainScreenState extends State<MainScreen> {
       key: _scaffoldKey,
       backgroundColor: TranslinerTheme.lightGray,
       appBar: _buildAppBar(),
-      drawer: _buildDrawer(),
+      drawer: const ModernDrawer(),
       body: const HomeContent(), // Remove the key
     );
   }
