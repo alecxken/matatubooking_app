@@ -528,9 +528,9 @@ class _VehiclesManagementScreenState extends State<VehiclesManagementScreen> {
                       hint: Text('Select owner',
                           style: GoogleFonts.montserrat()),
                       items: owners.map((owner) {
-                        return DropdownMenuItem(
-                          value: owner.ownerName,
-                          child: Text(owner.ownerName,
+                        return DropdownMenuItem<String>(
+                          value: owner.fullName,
+                          child: Text(owner.fullName,
                               style: GoogleFonts.montserrat()),
                         );
                       }).toList(),
@@ -597,7 +597,7 @@ class _VehiclesManagementScreenState extends State<VehiclesManagementScreen> {
                   _showError(context, 'Please enter number of seats');
                   return;
                 }
-                if (selectedOwner == null || selectedOwner.isEmpty) {
+                if (selectedOwner == null || selectedOwner!.isEmpty) {
                   _showError(context, 'Please select vehicle owner');
                   return;
                 }
@@ -613,7 +613,7 @@ class _VehiclesManagementScreenState extends State<VehiclesManagementScreen> {
                   token: vehicle?.token,
                   regNo: regNoController.text.trim().toUpperCase(),
                   vehicleType: vehicleTypeController.text.trim(),
-                  vehicleOwner: selectedOwner,
+                  vehicleOwner: selectedOwner!,
                   seats: seats,
                   status: selectedStatus,
                 );

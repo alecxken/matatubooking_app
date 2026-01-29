@@ -455,6 +455,23 @@ class TripManagementProvider extends ChangeNotifier {
     }
   }
 
+  Future<DestinationModel?> createDestination(DestinationModel destination) async {
+    try {
+      // Use the createDestinations API which expects a string
+      final newDestinations = await _apiService.createDestinations(destination.name);
+      if (newDestinations.isNotEmpty) {
+        _destinations.insertAll(0, newDestinations);
+        notifyListeners();
+        return newDestinations.first;
+      }
+      return null;
+    } catch (e) {
+      _destinationsError = e.toString();
+      notifyListeners();
+      return null;
+    }
+  }
+
   Future<List<DestinationModel>?> createDestinations(String destinations) async {
     try {
       final newDestinations = await _apiService.createDestinations(destinations);
