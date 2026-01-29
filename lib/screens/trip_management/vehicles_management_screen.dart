@@ -68,6 +68,11 @@ class _VehiclesManagementScreenState extends State<VehiclesManagementScreen> {
     return Scaffold(
       backgroundColor: TranslinerTheme.lightGray,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+          tooltip: 'Back',
+        ),
         title: Text(
           'Vehicles Management',
           style: GoogleFonts.montserrat(
