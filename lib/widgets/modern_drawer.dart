@@ -499,11 +499,19 @@ class _ModernDrawerState extends State<ModernDrawer>
   }
 
   List<DrawerMenuItem> _getMenuItemsForRole(AuthProvider authProvider) {
-    final isAdmin = authProvider.hasAnyRole(['admin', 'super-admin']);
-    final isManager = authProvider.hasAnyRole(['admin', 'super-admin', 'manager']);
-    final isSupervisor = authProvider.hasAnyRole(['supervisor', 'admin', 'super-admin']);
-    final isClerk = authProvider.hasAnyRole(['clerk', 'booking-agent']);
-    final isOwner = authProvider.hasAnyRole(['owner']);
+    final user = authProvider.user;
+    if (user == null) return [];
+
+    // Use UserModel's built-in role helpers for more reliable checking
+    final isAdmin = user.isAdmin;
+    final isManager = user.isManager;
+    final isSupervisor = user.hasAnyRole(['supervisor', 'admin', 'super-admin']);
+    final isClerk = user.hasAnyRole(['clerk', 'booking-agent', 'operator']);
+    final isOwner = user.hasRole('owner');
+
+    // Debug print to check roles
+    debugPrint('ModernDrawer - User roles: ${user.roles}');
+    debugPrint('ModernDrawer - isAdmin: $isAdmin, isManager: $isManager');
 
     List<DrawerMenuItem> items = [];
 
@@ -555,6 +563,7 @@ class _ModernDrawerState extends State<ModernDrawer>
       items.add(DrawerMenuItem(
         icon: Icons.settings_applications_rounded,
         title: 'Trip Management',
+        iconColor: TranslinerTheme.primaryRed,
         children: [
           DrawerMenuItem(
             icon: Icons.route_rounded,
@@ -572,22 +581,16 @@ class _ModernDrawerState extends State<ModernDrawer>
               context.go('/operations/destinations');
             },
           ),
-          DrawerMenuItem(
-            icon: Icons.event_repeat_rounded,
-            title: 'Templates',
-            onTap: () {
-              Navigator.pop(context);
-              context.go('/operations/templates');
-            },
-          ),
-          DrawerMenuItem(
-            icon: Icons.calendar_month_rounded,
-            title: 'Bulk Creation',
-            onTap: () {
-              Navigator.pop(context);
-              context.go('/operations/bulk-trips');
-            },
-          ),
+          if (isAdmin || isManager) ...[
+            DrawerMenuItem(
+              icon: Icons.account_balance_wallet_rounded,
+              title: 'Expense Types',
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/operations/expenses');
+              },
+            ),
+          ],
         ],
       ));
     }
