@@ -469,7 +469,7 @@ class TripManagementApiService {
       'expense_name': expense.name,
       'amount': expense.amount,
       'route': expense.route,
-      'vehicle_type': vehicleTypes ?? [expense.vehicleType],
+      'vehicle_type': vehicleTypes ?? (expense.vehicleType != null ? [expense.vehicleType!] : []),
       'status': expense.status,
     };
 
