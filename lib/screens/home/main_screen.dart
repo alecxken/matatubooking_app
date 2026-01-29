@@ -21,6 +21,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _currentIndex = 0;
+  DateTime? _lastBackPress;
 
   // Bottom navigation screens
   late final List<Widget> _screens;
@@ -41,17 +42,69 @@ class _MainScreenState extends State<MainScreen> {
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.user;
 
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: TranslinerTheme.lightGray,
-      appBar: _buildModernAppBar(authProvider),
-      drawer: const ModernDrawer(),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        _handleBackPress();
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: TranslinerTheme.lightGray,
+        appBar: _buildModernAppBar(authProvider),
+        drawer: const ModernDrawer(),
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _screens,
+        ),
+        bottomNavigationBar: _buildModernBottomNav(user),
       ),
-      bottomNavigationBar: _buildModernBottomNav(user),
     );
+  }
+
+  void _handleBackPress() {
+    final router = GoRouter.of(context);
+
+    // Check if we can go back in router history
+    if (router.canPop()) {
+      router.pop();
+      return;
+    }
+
+    // If not on home tab, go back to home tab
+    if (_currentIndex != 0) {
+      setState(() {
+        _currentIndex = 0;
+      });
+      return;
+    }
+
+    // If on home tab and can't go back, use double-tap-to-exit pattern
+    final now = DateTime.now();
+    final backPressInterval = _lastBackPress == null
+        ? const Duration(seconds: 3)
+        : now.difference(_lastBackPress!);
+
+    if (backPressInterval > const Duration(seconds: 2)) {
+      // First back press - show message
+      _lastBackPress = now;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Press back again to exit',
+            style: GoogleFonts.montserrat(),
+          ),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: TranslinerTheme.charcoal,
+        ),
+      );
+    } else {
+      // Second back press within 2 seconds - exit app
+      _lastBackPress = null;
+      // Exit the app
+      Navigator.of(context).pop();
+    }
   }
 
   PreferredSizeWidget _buildModernAppBar(AuthProvider authProvider) {
