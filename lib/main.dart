@@ -14,6 +14,11 @@ import 'screens/trip/payment_screen.dart';
 import 'screens/settings/app_settings_screen.dart';
 import 'screens/operations/operations_screen.dart';
 import 'screens/trip_management/owner_management_screen.dart';
+import 'screens/trip_management/routes_management_screen.dart';
+import 'screens/trip_management/destinations_management_screen.dart';
+import 'screens/trip_management/vehicles_management_screen.dart';
+import 'screens/trip_management/drivers_management_screen.dart';
+import 'screens/trip_management/expense_types_management_screen.dart';
 import 'screens/reports/reports_screen.dart';
 import 'screens/trip/parcels_management_screen.dart';
 import 'theme/transliner_theme.dart';
@@ -125,6 +130,27 @@ class TranslinerCruiserApp extends StatelessWidget {
         GoRoute(
           path: '/parcels',
           builder: (context, state) => ParcelsManagementScreen(),
+        ),
+        // Trip Management Routes
+        GoRoute(
+          path: '/operations/routes',
+          builder: (context, state) => const RoutesManagementScreen(),
+        ),
+        GoRoute(
+          path: '/operations/destinations',
+          builder: (context, state) => const DestinationsManagementScreen(),
+        ),
+        GoRoute(
+          path: '/operations/vehicles',
+          builder: (context, state) => const VehiclesManagementScreen(),
+        ),
+        GoRoute(
+          path: '/operations/drivers',
+          builder: (context, state) => const DriversManagementScreen(),
+        ),
+        GoRoute(
+          path: '/operations/expenses',
+          builder: (context, state) => const ExpenseTypesManagementScreen(),
         ),
       ],
     );
