@@ -228,19 +228,19 @@ class _ModernDrawerState extends State<ModernDrawer>
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: item.onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: item.isSelected
                   ? TranslinerTheme.primaryRed.withOpacity(0.15)
                   : Colors.white.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: item.isSelected
                     ? TranslinerTheme.primaryRed.withOpacity(0.4)
@@ -251,24 +251,24 @@ class _ModernDrawerState extends State<ModernDrawer>
             child: Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: item.isSelected
                         ? TranslinerTheme.primaryRed.withOpacity(0.2)
                         : item.iconColor?.withOpacity(0.1) ??
                             TranslinerTheme.gray600.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     item.icon,
                     color: item.isSelected
                         ? TranslinerTheme.primaryRed
                         : item.iconColor ?? TranslinerTheme.charcoal,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     item.title,
@@ -315,7 +315,7 @@ class _ModernDrawerState extends State<ModernDrawer>
     final isExpanded = _expandedSection == item.title;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: Column(
         children: [
           Material(
@@ -326,14 +326,14 @@ class _ModernDrawerState extends State<ModernDrawer>
                   _expandedSection = isExpanded ? null : item.title;
                 });
               },
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: isExpanded
                       ? TranslinerTheme.primaryRed.withOpacity(0.1)
                       : Colors.white.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isExpanded
                         ? TranslinerTheme.primaryRed.withOpacity(0.4)
@@ -344,24 +344,24 @@ class _ModernDrawerState extends State<ModernDrawer>
                 child: Row(
                   children: [
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
                         color: isExpanded
                             ? TranslinerTheme.primaryRed.withOpacity(0.2)
                             : item.iconColor?.withOpacity(0.1) ??
                                 TranslinerTheme.gray600.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         item.icon,
                         color: isExpanded
                             ? TranslinerTheme.primaryRed
                             : item.iconColor ?? TranslinerTheme.charcoal,
-                        size: 20,
+                        size: 18,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         item.title,
@@ -394,11 +394,11 @@ class _ModernDrawerState extends State<ModernDrawer>
           AnimatedCrossFade(
             firstChild: const SizedBox.shrink(),
             secondChild: Container(
-              margin: const EdgeInsets.only(left: 20, top: 8),
-              padding: const EdgeInsets.all(8),
+              margin: const EdgeInsets.only(left: 16, top: 4),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: Colors.white.withOpacity(0.2),
                 ),
@@ -409,28 +409,28 @@ class _ModernDrawerState extends State<ModernDrawer>
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: child.onTap,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
+                          horizontal: 10,
+                          vertical: 8,
                         ),
                         decoration: BoxDecoration(
                           color: child.isSelected
                               ? TranslinerTheme.primaryRed.withOpacity(0.1)
                               : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               child.icon,
-                              size: 18,
+                              size: 16,
                               color: child.isSelected
                                   ? TranslinerTheme.primaryRed
                                   : TranslinerTheme.gray600,
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 child.title,
@@ -540,6 +540,51 @@ class _ModernDrawerState extends State<ModernDrawer>
         Navigator.pop(context);
       },
     ));
+
+    // Trip Operations (Admin, Manager, Supervisor, Operator)
+    if (isAdmin || isManager || isSupervisor || user.hasAnyRole(['operator', 'booking-agent'])) {
+      items.add(DrawerMenuItem(
+        icon: Icons.add_circle_rounded,
+        title: 'Trip Operations',
+        iconColor: TranslinerTheme.successGreen,
+        children: [
+          DrawerMenuItem(
+            icon: Icons.add_rounded,
+            title: 'Create New Trip',
+            onTap: () {
+              Navigator.pop(context);
+              // TODO: Navigate to create trip screen
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Create Trip feature coming soon',
+                    style: GoogleFonts.montserrat(),
+                  ),
+                  backgroundColor: TranslinerTheme.infoBlue,
+                ),
+              );
+            },
+          ),
+          DrawerMenuItem(
+            icon: Icons.playlist_add_rounded,
+            title: 'Bulk Create Trips',
+            onTap: () {
+              Navigator.pop(context);
+              // TODO: Navigate to bulk create trips screen
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Bulk Create Trips feature coming soon',
+                    style: GoogleFonts.montserrat(),
+                  ),
+                  backgroundColor: TranslinerTheme.infoBlue,
+                ),
+              );
+            },
+          ),
+        ],
+      ));
+    }
 
     // Reports (Admin, Manager, Supervisor, Owner)
     debugPrint('🔍 Checking Reports: isAdmin=$isAdmin || isManager=$isManager || isSupervisor=$isSupervisor || isOwner=$isOwner');

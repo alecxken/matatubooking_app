@@ -1,6 +1,7 @@
 // lib/screens/trip_management/owner_management_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../models/owner_model.dart';
 import '../../providers/trip_management_provider.dart';
@@ -119,8 +120,8 @@ class _OwnerManagementScreenState extends State<OwnerManagementScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'Back',
+          onPressed: () => context.go('/'),
+          tooltip: 'Back to Home',
         ),
         title: const Text('Owner Management'),
         actions: [

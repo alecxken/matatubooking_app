@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -73,8 +74,8 @@ class _ExpenseTypesManagementScreenState
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'Back',
+          onPressed: () => context.go('/'),
+          tooltip: 'Back to Home',
         ),
         title: Text(
           'Expense Types Management',
