@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../theme/transliner_theme.dart';
 import '../../providers/trip_provider.dart';
@@ -140,8 +141,8 @@ class _ReportsScreenState extends State<ReportsScreen>
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'Back',
+          onPressed: () => context.go('/'),
+          tooltip: 'Back to Home',
         ),
         title: Text(
           'Daily Reports',
