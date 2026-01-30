@@ -528,6 +528,7 @@ class _ModernDrawerState extends State<ModernDrawer>
       title: 'Dashboard',
       onTap: () {
         Navigator.pop(context);
+        context.go('/');
       },
       isSelected: true,
     ));
@@ -538,6 +539,7 @@ class _ModernDrawerState extends State<ModernDrawer>
       title: 'Trips',
       onTap: () {
         Navigator.pop(context);
+        context.go('/');
       },
     ));
 

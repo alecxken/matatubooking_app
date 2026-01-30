@@ -61,7 +61,7 @@ class TranslinerCruiserApp extends StatelessWidget {
 
   GoRouter _createRouter(AuthProvider authProvider) {
     return GoRouter(
-      initialLocation: authProvider.isAuthenticated ? '/home' : '/login',
+      initialLocation: authProvider.isAuthenticated ? '/' : '/login',
       refreshListenable: authProvider,
       redirect: (context, state) {
         final isAuthenticated = authProvider.isAuthenticated;
@@ -72,12 +72,16 @@ class TranslinerCruiserApp extends StatelessWidget {
         }
 
         if (isAuthenticated && isLoggingIn) {
-          return '/home';
+          return '/';
         }
 
         return null;
       },
       routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const MainScreen(),
+        ),
         GoRoute(
           path: '/login',
           builder: (context, state) => const LoginScreen(),
