@@ -128,69 +128,309 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Widget _buildBookingConfirmation() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildSuccessHeader(),
-          const SizedBox(height: 20),
-          _buildBookingDetails(),
-          const SizedBox(height: 20),
-          _buildQRCode(),
-          const SizedBox(height: 30),
-          _buildActionButtons(),
-        ],
-      ),
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildSuccessHeader(),
+                const SizedBox(height: 16),
+                _buildCompactBookingCard(),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+        _buildBottomNavigationBar(),
+      ],
     );
   }
 
   Widget _buildSuccessHeader() {
-    return Container(
-      decoration: TranslinerDecorations.premiumCard.copyWith(
-        color: TranslinerTheme.successGreen.withOpacity(0.1),
-        border: Border.all(
-          color: TranslinerTheme.successGreen.withOpacity(0.3),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                TranslinerTheme.successGreen.withOpacity(0.2),
+                TranslinerTheme.successGreen.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: TranslinerTheme.successGreen.withOpacity(0.3),
+              width: 1.5,
+            ),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      TranslinerTheme.successGreen,
+                      Color(0xFF10B981),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: TranslinerTheme.successGreen.withOpacity(0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Booking Confirmed!',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: TranslinerTheme.charcoal,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: TranslinerTheme.primaryRed.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: TranslinerTheme.primaryRed.withOpacity(0.3),
+                  ),
+                ),
+                child: Text(
+                  '#${_bookingReference ?? 'N/A'}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: TranslinerTheme.primaryRed,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
+    );
+  }
+
+  Widget _buildCompactBookingCard() {
+    final qrData = {
+      'type': 'booking',
+      'reference': _bookingReference,
+      'trip_token': widget.tripToken,
+      'seats': widget.selectedSeats.join(','),
+      'amount': widget.totalAmount,
+      'passenger':
+          '${widget.passengerDetails['firstName']} ${widget.passengerDetails['lastName']}',
+      'phone': widget.passengerDetails['phone'],
+    };
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.9),
+                Colors.white.withOpacity(0.7),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: TranslinerTheme.primaryRed.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              // QR Code
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: TranslinerTheme.gray200,
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: TranslinerTheme.gray400.withOpacity(0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: QrImageView(
+                  data: qrData.toString(),
+                  version: QrVersions.auto,
+                  size: 180.0,
+                  backgroundColor: Colors.white,
+                  foregroundColor: TranslinerTheme.charcoal,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Show QR code to conductor',
+                style: TextStyle(
+                  color: TranslinerTheme.gray600,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 16),
+
+              // Compact Booking Details
+              _buildCompactDetailRow(
+                Icons.person_rounded,
+                'Passenger',
+                '${widget.passengerDetails['firstName']} ${widget.passengerDetails['lastName']}',
+              ),
+              _buildCompactDetailRow(
+                Icons.phone_rounded,
+                'Phone',
+                widget.passengerDetails['phone'] ?? '',
+              ),
+              _buildCompactDetailRow(
+                Icons.route_rounded,
+                'Route',
+                widget.trip['route']?.toString() ?? '',
+              ),
+              _buildCompactDetailRow(
+                Icons.event_seat_rounded,
+                'Seats',
+                widget.selectedSeats.map((s) => 'Seat $s').join(', '),
+              ),
+              _buildCompactDetailRow(
+                Icons.directions_bus_rounded,
+                'Vehicle',
+                widget.trip['vehicle']?.toString() ?? 'TBA',
+              ),
+              _buildCompactDetailRow(
+                Icons.schedule_rounded,
+                'Time',
+                '${widget.trip['departure_date']} • ${widget.trip['departure_time']}',
+              ),
+
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: TranslinerTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: TranslinerTheme.primaryRed.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Total Amount',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      'KES ${widget.totalAmount.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactDetailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
         children: [
           Container(
-            width: 80,
-            height: 80,
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: TranslinerTheme.successGreen,
-              borderRadius: BorderRadius.circular(40),
+              color: TranslinerTheme.primaryRed.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.check_circle,
-              color: Colors.white,
-              size: 40,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Booking Confirmed!',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: TranslinerTheme.charcoal,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Reference: ${_bookingReference ?? 'N/A'}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+            child: Icon(
+              icon,
               color: TranslinerTheme.primaryRed,
+              size: 18,
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Payment verification will continue in background.\nYou will receive SMS confirmation once payment is processed.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: TranslinerTheme.gray600, fontSize: 14),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: TranslinerTheme.gray600,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: TranslinerTheme.charcoal,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -324,6 +564,107 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              // Book Another Seat - Primary Action
+              Expanded(
+                flex: 2,
+                child: ElevatedButton(
+                  onPressed: _bookAnotherSeat,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: TranslinerTheme.primaryRed,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.add_circle_rounded, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Book Another Seat',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Share Button
+              _buildNavButton(
+                icon: Icons.share_rounded,
+                onTap: _shareBooking,
+              ),
+              const SizedBox(width: 8),
+
+              // Receipt Button
+              _buildNavButton(
+                icon: Icons.receipt_long_rounded,
+                onTap: _generateReceipt,
+              ),
+              const SizedBox(width: 8),
+
+              // Home Button
+              _buildNavButton(
+                icon: Icons.home_rounded,
+                onTap: _goBack,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavButton({required IconData icon, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: TranslinerTheme.gray100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: TranslinerTheme.gray200,
+          ),
+        ),
+        child: Icon(
+          icon,
+          color: TranslinerTheme.primaryRed,
+          size: 22,
+        ),
+      ),
+    );
+  }
+
+  void _bookAnotherSeat() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   Widget _buildActionButtons() {

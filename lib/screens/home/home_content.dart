@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -347,202 +348,242 @@ class _HomeContentState extends State<HomeContent>
     final occupancyRate = totalSeats > 0
         ? (trip['booked_seats_count'] ?? 0) / totalSeats
         : 0.0;
+    final tripNumber = trip['token'] ?? '';
 
-    return Container(
-      decoration: TranslinerDecorations.premiumCard,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => _navigateToTripDetail(trip['token'] as String?),
-          child: Padding(
-            padding: TranslinerSpacing.cardPadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.9),
+                Colors.white.withOpacity(0.7),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: TranslinerTheme.primaryRed.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => _navigateToTripDetail(trip['token'] as String?),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            trip['route'] ?? 'Unknown Route',
-                            style: const TextStyle(
-                              color: TranslinerTheme.charcoal,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                    // Trip Number Badge & Edit Button
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
                           ),
-                          const SizedBox(height: 4),
-                          Row(
+                          decoration: BoxDecoration(
+                            gradient: TranslinerTheme.primaryGradient,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: TranslinerTheme.primaryRed.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
-                                Icons.schedule,
-                                color: TranslinerTheme.gray600,
+                                Icons.tag,
+                                color: Colors.white,
                                 size: 14,
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                trip['departure_time'] ?? 'TBD',
-                                style: const TextStyle(
-                                  color: TranslinerTheme.gray600,
-                                  fontSize: 14,
+                                '#${tripNumber.substring(0, tripNumber.length > 8 ? 8 : tripNumber.length).toUpperCase()}',
+                                style: GoogleFonts.montserrat(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: TranslinerDecorations.primaryButton,
-                      child: Text(
-                        'KES ${trip['fare'] ?? '0'}',
-                        style: const TextStyle(
-                          color: TranslinerTheme.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
                         ),
-                      ),
-                    ),
-                    Consumer<AuthProvider>(
-                      builder: (context, authProvider, child) {
-                        if (authProvider.canManageTrips) {
-                          return Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            child: PopupMenuButton<String>(
-                              icon: const Icon(
-                                Icons.more_vert,
-                                color: TranslinerTheme.gray600,
-                                size: 20,
-                              ),
-                              onSelected: (value) {
-                                switch (value) {
-                                  case 'edit':
-                                    _showEditTripModal(trip);
-                                    break;
-                                  case 'details':
-                                    _navigateToTripDetail(
-                                      trip['token'] as String?,
-                                    );
-                                    break;
-                                  case 'duplicate':
-                                    _showDuplicateTripModal(trip);
-                                    break;
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(
-                                  value: 'edit',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.edit,
-                                        size: 16,
-                                        color: TranslinerTheme.primaryRed,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text('Edit Trip'),
-                                    ],
-                                  ),
+                        Consumer<AuthProvider>(
+                          builder: (context, authProvider, child) {
+                            if (authProvider.canManageTrips) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: TranslinerTheme.primaryRed.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                const PopupMenuItem(
-                                  value: 'details',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.info,
-                                        size: 16,
-                                        color: TranslinerTheme.infoBlue,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text('View Details'),
-                                    ],
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.edit_rounded,
+                                    color: TranslinerTheme.primaryRed,
+                                    size: 18,
                                   ),
+                                  onPressed: () => _showEditTripModal(trip),
+                                  padding: const EdgeInsets.all(8),
+                                  constraints: const BoxConstraints(),
+                                  tooltip: 'Edit Trip',
                                 ),
-                                const PopupMenuItem(
-                                  value: 'duplicate',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.copy,
-                                        size: 16,
-                                        color: TranslinerTheme.successGreen,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text('Duplicate'),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
 
-                const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                Row(
-                  children: [
-                    _buildInfoChip(
-                      Icons.directions_bus,
-                      trip['vehicle'] ?? 'TBA',
-                    ),
-                    const SizedBox(width: 12),
-                    _buildInfoChip(Icons.person, trip['driver'] ?? 'TBA'),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                    // Route & Time
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Seat Availability',
-                          style: TextStyle(
-                            color: TranslinerTheme.gray600,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                trip['route'] ?? 'Unknown Route',
+                                style: GoogleFonts.montserrat(
+                                  color: TranslinerTheme.charcoal,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.schedule_rounded,
+                                    color: TranslinerTheme.gray600,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    trip['departure_time'] ?? 'TBD',
+                                    style: GoogleFonts.montserrat(
+                                      color: TranslinerTheme.gray600,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        Text(
-                          '$availableSeats/$totalSeats available',
-                          style: const TextStyle(
-                            color: TranslinerTheme.charcoal,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: TranslinerTheme.primaryGradient,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: TranslinerTheme.primaryRed.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            'KES ${trip['fare'] ?? '0'}',
+                            style: GoogleFonts.montserrat(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: (1 - occupancyRate).toDouble(),
-                        backgroundColor: TranslinerTheme.gray100,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          _getSeatAvailabilityColor(occupancyRate),
+
+                    const SizedBox(height: 16),
+
+                    // Vehicle & Driver
+                    Row(
+                      children: [
+                        _buildInfoChip(
+                          Icons.directions_bus_rounded,
+                          trip['vehicle'] ?? 'TBA',
                         ),
-                        minHeight: 6,
-                      ),
+                        const SizedBox(width: 12),
+                        _buildInfoChip(
+                          Icons.person_rounded,
+                          trip['driver'] ?? 'TBA',
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Seat Availability
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Seat Availability',
+                              style: GoogleFonts.montserrat(
+                                color: TranslinerTheme.gray600,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              '$availableSeats/$totalSeats available',
+                              style: GoogleFonts.montserrat(
+                                color: TranslinerTheme.charcoal,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: (1 - occupancyRate).toDouble(),
+                            backgroundColor: TranslinerTheme.gray100,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              _getSeatAvailabilityColor(occupancyRate),
+                            ),
+                            minHeight: 8,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

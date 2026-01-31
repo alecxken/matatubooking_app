@@ -1,5 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../providers/trip_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -229,8 +232,8 @@ class OccupiedSeatsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<TripProvider>(
-      builder: (context, tripProvider, child) {
+    return Consumer2<TripProvider, AuthProvider>(
+      builder: (context, tripProvider, authProvider, child) {
         final seats = tripProvider.getTripSeats(tripToken);
         final occupiedSeats = seats.where((seat) => seat.isBooked).toList();
 
@@ -269,31 +272,171 @@ class OccupiedSeatsView extends StatelessWidget {
           itemBuilder: (context, index) {
             final seat = occupiedSeats[index];
             final passenger = seat.passenger!;
+            final canViewDetails = authProvider.canManageTrips;
 
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: TranslinerTheme.errorRed,
-                  child: Text(
-                    seat.seatNo.toString(),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                title: Text(passenger.name),
-                subtitle: Text('Phone: ${passenger.maskedPhone}'),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(passenger.bookingStatus),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    passenger.bookingStatus,
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+            return GestureDetector(
+              onTap: () => _showPassengerDetails(
+                context,
+                seat,
+                passenger,
+                canViewDetails,
+              ),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(0.9),
+                            Colors.white.withOpacity(0.7),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _getStatusColor(passenger.bookingStatus)
+                              .withOpacity(0.3),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _getStatusColor(passenger.bookingStatus)
+                                .withOpacity(0.2),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          // Seat Number Badge
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  _getStatusColor(passenger.bookingStatus),
+                                  _getStatusColor(passenger.bookingStatus)
+                                      .withOpacity(0.7),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _getStatusColor(passenger.bookingStatus)
+                                      .withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.event_seat_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  seat.seatNo.toString(),
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(width: 16),
+
+                          // Passenger Info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  passenger.name,
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: TranslinerTheme.charcoal,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.phone_rounded,
+                                      size: 14,
+                                      color: TranslinerTheme.gray600,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      canViewDetails
+                                          ? passenger.phone
+                                          : passenger.maskedPhone,
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 13,
+                                        color: TranslinerTheme.gray600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _getStatusColor(passenger.bookingStatus)
+                                        .withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: _getStatusColor(passenger.bookingStatus)
+                                          .withOpacity(0.5),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    passenger.bookingStatus,
+                                    style: GoogleFonts.montserrat(
+                                      color: _getStatusColor(passenger.bookingStatus),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Action Icon
+                          if (canViewDetails)
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: TranslinerTheme.primaryRed.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.chevron_right_rounded,
+                                color: TranslinerTheme.primaryRed,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -304,13 +447,257 @@ class OccupiedSeatsView extends StatelessWidget {
     );
   }
 
+  void _showPassengerDetails(
+    BuildContext context,
+    dynamic seat,
+    dynamic passenger,
+    bool canViewDetails,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.95),
+                    Colors.white.withOpacity(0.85),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1.5,
+                ),
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          _getStatusColor(passenger.bookingStatus),
+                          _getStatusColor(passenger.bookingStatus).withOpacity(0.7),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _getStatusColor(passenger.bookingStatus)
+                              .withOpacity(0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.event_seat_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Seat ${seat.seatNo}',
+                          style: GoogleFonts.montserrat(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Passenger Name
+                  Text(
+                    passenger.name,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: TranslinerTheme.charcoal,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Status Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(passenger.bookingStatus)
+                          .withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _getStatusColor(passenger.bookingStatus),
+                      ),
+                    ),
+                    child: Text(
+                      passenger.bookingStatus,
+                      style: GoogleFonts.montserrat(
+                        color: _getStatusColor(passenger.bookingStatus),
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  const SizedBox(height: 16),
+
+                  // Contact Info
+                  if (canViewDetails) ...[
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.phone_rounded,
+                          color: TranslinerTheme.primaryRed,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Phone Number',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 12,
+                                  color: TranslinerTheme.gray600,
+                                ),
+                              ),
+                              Text(
+                                passenger.phone,
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: TranslinerTheme.charcoal,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => _makePhoneCall(passenger.phone),
+                          icon: Icon(
+                            Icons.call_rounded,
+                            color: TranslinerTheme.successGreen,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor:
+                                TranslinerTheme.successGreen.withOpacity(0.1),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Booking Reference
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.confirmation_number_rounded,
+                          color: TranslinerTheme.primaryRed,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Booking Reference',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 12,
+                                  color: TranslinerTheme.gray600,
+                                ),
+                              ),
+                              Text(
+                                passenger.bookingRef ?? 'N/A',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: TranslinerTheme.charcoal,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Close Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: TranslinerTheme.primaryRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Close',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
+    if (await canLaunchUrl(phoneUri)) {
+      await launchUrl(phoneUri);
+    }
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'confirmed':
+      case 'paid':
         return TranslinerTheme.successGreen;
       case 'pending':
         return TranslinerTheme.warningYellow;
       case 'cancelled':
+      case 'no-show':
         return TranslinerTheme.errorRed;
       default:
         return TranslinerTheme.gray600;
