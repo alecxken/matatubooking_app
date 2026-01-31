@@ -18,10 +18,12 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen>
+    with SingleTickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _currentIndex = 0;
   DateTime? _lastBackPress;
+  bool _isFabOpen = false;
 
   // Bottom navigation screens
   late final List<Widget> _screens;
@@ -57,6 +59,7 @@ class _MainScreenState extends State<MainScreen> {
           index: _currentIndex,
           children: _screens,
         ),
+        floatingActionButton: _buildSpeedDialFAB(authProvider),
         bottomNavigationBar: _buildModernBottomNav(user),
       ),
     );
@@ -698,6 +701,134 @@ class _MainScreenState extends State<MainScreen> {
         context.go('/login');
       }
     }
+  }
+
+  Widget? _buildSpeedDialFAB(AuthProvider authProvider) {
+    // Only show on home screen (index 0) and for users who can manage trips
+    if (_currentIndex != 0 || !authProvider.canManageTrips) {
+      return null;
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Speed dial menu items (shown when FAB is expanded)
+        if (_isFabOpen) ...[
+          // Bulk Create Trips
+          _buildSpeedDialItem(
+            label: 'Bulk Create Trips',
+            icon: Icons.playlist_add_rounded,
+            gradient: LinearGradient(
+              colors: [
+                TranslinerTheme.successGreen,
+                TranslinerTheme.successGreen.withOpacity(0.8),
+              ],
+            ),
+            onTap: () {
+              setState(() => _isFabOpen = false);
+              context.go('/trip/bulk');
+            },
+          ),
+          const SizedBox(height: 12),
+
+          // Create New Trip
+          _buildSpeedDialItem(
+            label: 'Create New Trip',
+            icon: Icons.add_rounded,
+            gradient: TranslinerTheme.primaryGradient,
+            onTap: () {
+              setState(() => _isFabOpen = false);
+              context.go('/trip/create');
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Main FAB
+        FloatingActionButton(
+          onPressed: () {
+            setState(() => _isFabOpen = !_isFabOpen);
+          },
+          backgroundColor: TranslinerTheme.primaryRed,
+          child: AnimatedRotation(
+            duration: const Duration(milliseconds: 200),
+            turns: _isFabOpen ? 0.125 : 0, // Rotate 45 degrees when open
+            child: Icon(
+              _isFabOpen ? Icons.close : Icons.add,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSpeedDialItem({
+    required String label,
+    required IconData icon,
+    required Gradient gradient,
+    required VoidCallback onTap,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Label
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Text(
+            label,
+            style: GoogleFonts.montserrat(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: TranslinerTheme.charcoal,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        // Button
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                gradient: gradient,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
