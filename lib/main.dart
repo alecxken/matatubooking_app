@@ -11,6 +11,8 @@ import 'screens/home/main_screen.dart';
 import 'screens/trip/trip_detail_screen.dart';
 import 'screens/trip/seat_selection_screen.dart';
 import 'screens/trip/payment_screen.dart';
+import 'screens/trip/create_trip_screen.dart';
+import 'screens/trip/bulk_trip_screen.dart';
 import 'screens/settings/app_settings_screen.dart';
 import 'screens/operations/operations_screen.dart';
 import 'screens/trip_management/owner_management_screen.dart';
@@ -134,6 +136,15 @@ class TranslinerCruiserApp extends StatelessWidget {
         GoRoute(
           path: '/parcels',
           builder: (context, state) => ParcelsManagementScreen(),
+        ),
+        // Trip Operations Routes
+        GoRoute(
+          path: '/trip/create',
+          builder: (context, state) => const CreateTripScreen(),
+        ),
+        GoRoute(
+          path: '/trip/bulk',
+          builder: (context, state) => const BulkTripScreen(),
         ),
         // Trip Management Routes
         GoRoute(
