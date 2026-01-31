@@ -257,7 +257,7 @@ class _BulkTripScreenState extends State<BulkTripScreen> {
               ),
             ),
             items: _templates.map((template) {
-              return DropdownMenuItem(
+              return DropdownMenuItem<String>(
                 value: template['id'],
                 child: Text(
                   template['name'],
