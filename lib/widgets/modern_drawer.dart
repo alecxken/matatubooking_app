@@ -555,16 +555,7 @@ class _ModernDrawerState extends State<ModernDrawer>
             title: 'Create New Trip',
             onTap: () {
               Navigator.pop(context);
-              // TODO: Navigate to create trip screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Create Trip feature coming soon',
-                    style: GoogleFonts.montserrat(),
-                  ),
-                  backgroundColor: TranslinerTheme.infoBlue,
-                ),
-              );
+              context.go('/trip/create');
             },
           ),
           DrawerMenuItem(
@@ -572,16 +563,7 @@ class _ModernDrawerState extends State<ModernDrawer>
             title: 'Bulk Create Trips',
             onTap: () {
               Navigator.pop(context);
-              // TODO: Navigate to bulk create trips screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Bulk Create Trips feature coming soon',
-                    style: GoogleFonts.montserrat(),
-                  ),
-                  backgroundColor: TranslinerTheme.infoBlue,
-                ),
-              );
+              context.go('/trip/bulk');
             },
           ),
         ],

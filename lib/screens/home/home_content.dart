@@ -85,11 +85,14 @@ class _HomeContentState extends State<HomeContent>
               ),
             ),
             padding: const EdgeInsets.all(10),
-            child: SvgPicture.asset(
-              'assets/images/logo.svg',
-              colorFilter: const ColorFilter.mode(
-                Colors.white,
-                BlendMode.srcIn,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SvgPicture.asset(
+                'assets/images/logo.svg',
+                colorFilter: const ColorFilter.mode(
+                  Colors.white,
+                  BlendMode.srcIn,
+                ),
               ),
             ),
           ),
