@@ -192,11 +192,14 @@ class _LoginScreenState extends State<LoginScreen>
             ],
           ),
           padding: const EdgeInsets.all(20),
-          child: SvgPicture.asset(
-            'assets/images/logo.svg',
-            colorFilter: const ColorFilter.mode(
-              Colors.white,
-              BlendMode.srcIn,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: SvgPicture.asset(
+              'assets/images/logo.svg',
+              colorFilter: const ColorFilter.mode(
+                Colors.white,
+                BlendMode.srcIn,
+              ),
             ),
           ),
         ),
